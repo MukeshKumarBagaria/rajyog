@@ -1,0 +1,195 @@
+@import 'tailwindcss';
+
+/*
+ * ─── Rajyog design tokens ───────────────────────────────────────────────────
+ * Soft pink · ivory · dusty rose. Components only ever reference these tokens
+ * (via Tailwind utilities such as bg-surface / text-ink / border-line), so the
+ * whole app re-themes from this one place. See docs/design-system.md.
+ *
+ * Accessibility tuning: the brief's #987E88 supporting-text colour and #C76D8C
+ * primary are kept for accents/large text; small text and filled buttons use
+ * the slightly deeper `ink-secondary` / `primary-strong` to meet WCAG AA.
+ */
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  --background: #fff9f6;
+  --surface: #ffffff;
+  --surface-muted: #fdf4f7;
+  --primary: #c76d8c;
+  --primary-strong: #b05676;
+  --primary-foreground: #ffffff;
+  --primary-light: #f8e8ed;
+  --secondary: #e9a9bc;
+  --ink: #46333b;
+  --ink-secondary: #866b75;
+  --ink-faint: #987e88;
+  --line: #f0e2e7;
+  --line-strong: #e6cfd8;
+  --success: #6e9e83;
+  --success-ink: #4f7d63;
+  --success-light: #e8f2ec;
+  --warning: #d6a15d;
+  --warning-ink: #96682a;
+  --warning-light: #fbf1e3;
+  --danger: #c96b72;
+  --danger-ink: #b0505a;
+  --danger-light: #f9e7e8;
+  --heat-0: #f6edf0;
+  --heat-1: #f3d6df;
+  --heat-2: #e9a9bc;
+  --heat-3: #d886a2;
+  --heat-4: #b05676;
+  --shadow-color: 70 51 59;
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --background: #181215;
+  --surface: #221a1e;
+  --surface-muted: #2a2025;
+  --primary: #e39ab4;
+  --primary-strong: #e8a6bd;
+  --primary-foreground: #2a1720;
+  --primary-light: #3a2630;
+  --secondary: #c77f97;
+  --ink: #f6e9ee;
+  --ink-secondary: #c9b0ba;
+  --ink-faint: #9c8590;
+  --line: #3a2d33;
+  --line-strong: #4a3941;
+  --success: #8cc0a2;
+  --success-ink: #9fd0b3;
+  --success-light: #22322a;
+  --warning: #e2b878;
+  --warning-ink: #ecc68d;
+  --warning-light: #3a2f20;
+  --danger: #e08a90;
+  --danger-ink: #eb9ea3;
+  --danger-light: #3d2427;
+  --heat-0: #2a2025;
+  --heat-1: #4a2c39;
+  --heat-2: #7a3f57;
+  --heat-3: #b05676;
+  --heat-4: #e39ab4;
+  --shadow-color: 0 0 0;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-light: var(--primary-light);
+  --color-secondary: var(--secondary);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-success: var(--success);
+  --color-success-ink: var(--success-ink);
+  --color-success-light: var(--success-light);
+  --color-warning: var(--warning);
+  --color-warning-ink: var(--warning-ink);
+  --color-warning-light: var(--warning-light);
+  --color-danger: var(--danger);
+  --color-danger-ink: var(--danger-ink);
+  --color-danger-light: var(--danger-light);
+  --color-heat-0: var(--heat-0);
+  --color-heat-1: var(--heat-1);
+  --color-heat-2: var(--heat-2);
+  --color-heat-3: var(--heat-3);
+  --color-heat-4: var(--heat-4);
+
+  --font-sans: var(--font-manrope), var(--font-devanagari), ui-sans-serif, system-ui, sans-serif;
+  --font-hindi: var(--font-devanagari), var(--font-manrope), sans-serif;
+
+  --radius-card: 18px;
+  --radius-button: 12px;
+  --radius-input: 10px;
+
+  --shadow-soft: 0 1px 2px rgb(var(--shadow-color) / 0.04), 0 4px 16px rgb(var(--shadow-color) / 0.04);
+  --shadow-lift: 0 2px 4px rgb(var(--shadow-color) / 0.05), 0 12px 32px rgb(var(--shadow-color) / 0.08);
+
+  --animate-fade-in: fade-in 200ms ease-out both;
+  --animate-rise: rise 220ms ease-out both;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  :lang(hi),
+  .font-hindi {
+    font-family: var(--font-hindi);
+  }
+
+  ::selection {
+    background: var(--primary-light);
+    color: var(--ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    opacity: 0.4;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      transition-duration: 1ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* Subtle jaali (lattice) motif, inspired by Rajasthani screen work. */
+  .bg-jaali {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill='none' stroke='%23c76d8c' stroke-opacity='0.09' stroke-width='1'%3E%3Cpath d='M20 2 L38 20 L20 38 L2 20 Z'/%3E%3Ccircle cx='20' cy='20' r='6'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
