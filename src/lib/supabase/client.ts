@@ -8,6 +8,6 @@ let browserClient: ReturnType<typeof createBrowserClient<Database>> | undefined;
 
 /** Browser Supabase client (anon key + user session cookie; RLS applies). */
 export function createClient() {
-  browserClient ??= createBrowserClient<Database>(publicEnv.supabaseUrl, publicEnv.supabaseAnonKey);
+  browserClient ??= createBrowserClient<Database>(publicEnv.supabaseUrl, publicEnv.supabasePublishableKey);
   return browserClient;
 }

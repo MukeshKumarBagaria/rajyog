@@ -22,7 +22,7 @@ import type { ActionResult } from './types';
 /*
  * Every action re-verifies the caller is an administrator (is_admin()), and
  * the database enforces the same rule again through RLS. User provisioning
- * additionally uses the service-role key, which never leaves the server.
+ * additionally uses the Supabase secret key, which never leaves the server.
  */
 
 type ContentTable = 'subjects' | 'chapters' | 'lectures' | 'motivational_quotes';
@@ -280,7 +280,7 @@ export async function saveCutoffAction(formData: FormData): Promise<ActionResult
   }
 }
 
-/* ── Users (service role, server only) ─────────────────────────────────── */
+/* ── Users (secret key, server only) ─────────────────────────────────── */
 
 export async function createUserAction(formData: FormData): Promise<ActionResult<{ message: string }>> {
   const parsed = createUserSchema.safeParse({
@@ -299,7 +299,7 @@ export async function createUserAction(formData: FormData): Promise<ActionResult
 
   try {
     await adminActionContext();
-    if (!hasServiceRole()) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured on the server.');
+    if (!hasServiceRole()) throw new Error('SUPABASE_SECRET_KEY is not configured on the server.');
     const admin = createAdminClient();
 
     let userId: string;
@@ -345,7 +345,7 @@ export async function setUserActiveAction(userId: string, active: boolean): Prom
     const id = uuid.parse(userId);
     const ctx = await adminActionContext();
     if (id === ctx.userId) throw new Error('You cannot deactivate your own account.');
-    if (!hasServiceRole()) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured on the server.');
+    if (!hasServiceRole()) throw new Error('SUPABASE_SECRET_KEY is not configured on the server.');
     const admin = createAdminClient();
     const { error: banError } = await admin.auth.admin.updateUserById(id, { ban_duration: active ? 'none' : '876000h' });
     if (banError) throw banError;

@@ -49,7 +49,7 @@ export async function updatePreferencesAction(input: z.input<typeof preferencesS
 export async function setPinAction(pin: string, confirm: string): Promise<ActionResult> {
   const parsed = pinSetupSchema.safeParse({ pin, confirm });
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
-  if (!getLockSecret()) return { ok: false, error: 'PIN lock needs APP_LOCK_SECRET (or the service-role key) configured on the server.' };
+  if (!getLockSecret()) return { ok: false, error: 'PIN lock needs APP_LOCK_SECRET (or SUPABASE_SECRET_KEY) configured on the server.' };
   try {
     const { supabase, userId } = await actionContext();
     const { error } = await supabase.rpc('set_app_pin', { p_pin: parsed.data.pin });

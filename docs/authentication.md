@@ -7,11 +7,13 @@ cookies. There is **no public registration**.
 
 | Method | When | How |
 |---|---|---|
-| CLI script | First (owner) account | `npm run create-user -- --email you@example.com --name "Your Name" --password "…" --admin` (reads `.env.local`; uses the service-role key locally) |
+| CLI script | First (owner) account | `npm run create-user -- --email you@example.com --name "Your Name" --password "…" --admin` (reads `.env.local`; uses `SUPABASE_SECRET_KEY` locally) |
 | Admin → Users | Every other aspirant | *Email invitation* (they choose their own password) or *temporary password* you share privately |
 
-Both paths run on the server only. The service-role key is never sent to the
-browser (`src/lib/supabase/admin.ts` imports `server-only`).
+Both paths run on the server only. The secret key (`sb_secret_…`, or the legacy
+service-role key) is never sent to the browser (`src/lib/supabase/admin.ts`
+imports `server-only`). The browser and server otherwise use only the
+publishable key, so every query runs under RLS.
 
 Admin rights are stored in `app_admins`, which users cannot write to; RLS on
 content tables calls `is_admin()`. Every admin server action re-checks it too.

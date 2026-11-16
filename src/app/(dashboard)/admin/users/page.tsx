@@ -34,7 +34,7 @@ export default async function AdminUsersPage() {
     <div className="space-y-4">
       {!serviceRole ? (
         <Alert tone="warning">
-          Set <strong>SUPABASE_SERVICE_ROLE_KEY</strong> on the server to create or deactivate accounts. Until then you can bootstrap users with <code>npm run create-user</code>.
+          Set <strong>SUPABASE_SECRET_KEY</strong> on the server to create or deactivate accounts. Until then you can bootstrap users with <code>npm run create-user</code>.
         </Alert>
       ) : null}
       <div className="flex items-center justify-between gap-3">

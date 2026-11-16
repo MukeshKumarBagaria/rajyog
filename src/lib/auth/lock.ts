@@ -3,10 +3,11 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import { signUnlockToken, verifyUnlockToken } from './lock-token';
 import { UNLOCK_COOKIE } from '@/constants/app';
+import { supabaseSecretKey } from '@/lib/env';
 
 /** Secret for signing the unlock cookie. PIN lock is unavailable without one. */
 export function getLockSecret(): string | null {
-  return process.env.APP_LOCK_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || null;
+  return process.env.APP_LOCK_SECRET || supabaseSecretKey() || null;
 }
 
 export async function isUnlocked(userId: string): Promise<boolean> {

@@ -31,7 +31,7 @@ export default async function AdminOverviewPage() {
     <div className="space-y-5">
       {!hasServiceRole() ? (
         <Alert tone="warning">
-          <strong>SUPABASE_SERVICE_ROLE_KEY</strong> is not set on the server, so creating or deactivating accounts is unavailable. Content management works normally.
+          <strong>SUPABASE_SECRET_KEY</strong> is not set on the server, so creating or deactivating accounts is unavailable. Content management works normally.
         </Alert>
       ) : null}
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">

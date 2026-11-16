@@ -35,29 +35,24 @@ Rajyog deliberately has no feeds, leaderboards, chat, ads or gamification.
 
 ## Quick start
 
-### 1. Create a Supabase project
+### 1. Create a Supabase project and apply the schema
 
-Create a project at [supabase.com](https://supabase.com). Then apply the
-database schema — either with the Supabase CLI:
+Create a project at [supabase.com](https://supabase.com), open **SQL Editor**,
+paste the whole of [`supabase/setup.sql`](supabase/setup.sql) and click **Run**.
+It contains every migration plus the seed (14 RAS subjects with syllabus
+chapters + motivational messages) and runs as one transaction — if anything
+fails, nothing is applied.
 
-```bash
-npx supabase link --project-ref <your-project-ref>
-```
-
-```bash
-npx supabase db push
-```
-
-…or by running each file in `supabase/migrations/` **in filename order** in the
-dashboard SQL editor. Finally run `supabase/seed.sql` (14 RAS subjects with
-syllabus chapters + motivational messages).
+Using the Supabase CLI instead? `npx supabase link --project-ref <ref>`, then
+`npx supabase db push`, then run `supabase/seed.sql`.
 
 ### 2. Configure Supabase Auth
 
-* **Authentication → Providers → Email**: turn **off** "Allow new users to sign up".
-* **Authentication → URL configuration**: set the Site URL to your app URL and add
+* **Authentication → Sign In / Providers**: keep **Email** enabled and turn **off**
+  "Allow new users to sign up" (Rajyog has no public registration).
+* **Authentication → URL Configuration**: set the Site URL to your app URL and add
   `<site-url>/auth/confirm` to the redirect URLs.
-* **Authentication → Email templates**: use the links documented in
+* **Authentication → Emails**: use the links documented in
   [`docs/authentication.md`](docs/authentication.md) (branded HTML in `supabase/templates/`).
 
 ### 3. Environment variables
@@ -68,27 +63,44 @@ cp .env.example .env.local
 
 | Variable | Where | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Project Settings → API | public |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Project Settings → API | public; RLS protects data |
-| `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API | **server only** — used for creating/deactivating accounts |
+| `NEXT_PUBLIC_SUPABASE_URL` | Project Settings → API Keys | public |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Project Settings → API Keys (`sb_publishable_…`) | public; RLS protects data. Legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` also works |
+| `SUPABASE_SECRET_KEY` | Project Settings → API Keys (`sb_secret_…`) | **server only** — creating/deactivating accounts from Admin → Users and the `create-user` script. Legacy `SUPABASE_SERVICE_ROLE_KEY` also works |
 | `NEXT_PUBLIC_SITE_URL` | your app URL | used in auth email links |
 | `APP_LOCK_SECRET` | any long random string | signs the PIN-unlock cookie |
 
-### 4. Install, create the owner account, run
+Then verify the project (read-only, uses only the publishable key):
 
 ```bash
 npm install
 ```
 
 ```bash
+npm run check:supabase
+```
+
+### 4. Create your owner account and run
+
+**Option A — dashboard (no secret key needed):** Authentication → Users →
+**Add user → Create new user** (tick *Auto Confirm User*). Then in the SQL
+Editor make yourself the content administrator:
+
+```sql
+insert into public.app_admins (user_id) select id from auth.users where email = 'you@example.com';
+update public.profiles set full_name = 'Your Name' where id = (select id from auth.users where email = 'you@example.com');
+```
+
+**Option B — command line** (needs `SUPABASE_SECRET_KEY` in `.env.local`):
+
+```bash
 npm run create-user -- --email you@example.com --name "Your Name" --password "a-strong-password" --admin
 ```
+
+Start the app and sign in at http://localhost:3000:
 
 ```bash
 npm run dev
 ```
-
-Open http://localhost:3000 and sign in.
 
 ### 5. Add your content
 
@@ -103,7 +115,7 @@ Open http://localhost:3000 and sign in.
 ## Deploying to Vercel
 
 1. Import the repository in Vercel (framework: Next.js).
-2. Add the five environment variables above (Production + Preview).
+2. Add the five environment variables above (Production + Preview). `SUPABASE_SECRET_KEY` must **not** be prefixed with `NEXT_PUBLIC_`.
 3. Set `NEXT_PUBLIC_SITE_URL` and the Supabase Site URL to the Vercel domain.
 4. Deploy. The app needs no other services.
 
@@ -121,6 +133,8 @@ Open http://localhost:3000 and sign in.
 | `npm run test:db` | Applies all migrations + seed to a throwaway local PostgreSQL and runs the RLS / isolation / business-rule tests (needs PostgreSQL server binaries, or set `DATABASE_URL` to an empty database) |
 | `npm run check` | typecheck + lint + unit tests |
 | `npm run create-user` | Provision an account from the command line |
+| `npm run check:supabase` | Read-only check that your Supabase project has every table/function, locked down, and sign-ups disabled |
+| `npm run db:setup-sql` | Regenerate `supabase/setup.sql` after changing migrations or the seed (`test:db` fails if it is stale) |
 
 ---
 
@@ -130,7 +144,7 @@ Open http://localhost:3000 and sign in.
 |---|---|
 | Users can never access another user's records | RLS policies (`supabase/migrations/…0003_rls.sql`), tested in `supabase/tests/10_rls_isolation.sql` |
 | No self-promotion to admin; protected columns | `app_admins` has no write policies; column-level grants on `profiles` / `user_settings` |
-| Service-role key never in the browser | `src/lib/supabase/admin.ts` (`server-only`) |
+| Secret key never in the browser | `src/lib/supabase/admin.ts` (`server-only`) |
 | Seeking cannot complete a lecture; no duplicate counting | `PlaybackTracker` + `record_lecture_progress()` interval merging and `seq` idempotency |
 | Study time ≠ video duration; hidden tab / buffering excluded | [`docs/video-tracking.md`](docs/video-tracking.md) |
 | No manual + video double counting | Video study time pauses while the focus timer runs |

@@ -23,7 +23,7 @@ Browser ──► Next.js (Vercel)
 | Principle | How it is implemented |
 |---|---|
 | Shared content, private progress | Content tables are readable by every authenticated user and writable only by admins; every personal table carries `user_id` and RLS restricts it to `auth.uid()`. |
-| Security in the database | The browser and server both use the **anon key**. Authorisation is enforced by RLS and `SECURITY INVOKER` functions, never by front-end filtering. The service-role key is used only in `src/lib/supabase/admin.ts` (marked `server-only`) for account provisioning. |
+| Security in the database | The browser and server both use the **publishable key**. Authorisation is enforced by RLS and `SECURITY INVOKER` functions, never by front-end filtering. The secret key is used only in `src/lib/supabase/admin.ts` (marked `server-only`) for account provisioning. |
 | Three independent metrics | *Course completion* = completed lectures ÷ lectures. *Study time* = verified active seconds. *Readiness* = mock-test model. None is derived from another. |
 | Timezone-correct days | `study_sessions.local_date` is computed in the database from the user's `profiles.timezone`, so a session at 11:30 PM always lands on the right day. |
 | Server first | Pages are Server Components that fetch with the request's Supabase client. Client components are used only for the player, timer, charts and forms. |

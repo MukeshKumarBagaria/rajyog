@@ -40,10 +40,17 @@ else
   CONN="$DATABASE_URL"
 fi
 
+node "$ROOT/scripts/build-setup-sql.mjs" --check
+
 echo "Applying Supabase stub, migrations and seed…"
 run_sql "$ROOT/supabase/tests/00_supabase_stub.sql"
-for f in "$ROOT"/supabase/migrations/*.sql; do run_sql "$f"; done
-run_sql "$ROOT/supabase/seed.sql"
+if [[ "${USE_SETUP_SQL:-}" == "1" ]]; then
+  run_sql "$ROOT/supabase/setup.sql"   # the one-paste file used in the SQL Editor
+else
+  for f in "$ROOT"/supabase/migrations/*.sql; do run_sql "$f"; done
+  run_sql "$ROOT/supabase/seed.sql"
+  run_sql "$ROOT/supabase/seed.sql"    # seed must be safe to re-run
+fi
 
 echo "Running database tests…"
 psql "${PSQL_FLAGS[@]}" "$CONN" -f "$ROOT/supabase/tests/10_rls_isolation.sql"

@@ -86,7 +86,8 @@ join public.subjects s on s.slug = d.slug
 cross join lateral unnest(d.titles) with ordinality as t(title, ord)
 where not exists (select 1 from public.chapters c where c.subject_id = s.id and c.title = t.title);
 
-insert into public.motivational_quotes (quote, language, attribution, category) values
+insert into public.motivational_quotes (quote, language, attribution, category)
+select v.quote, v.language, v.attribution, v.category from (values
   ('म्हारो लक्ष्य ऊंचो है, तो म्हारी मेहनत भी ऊंची होणी चाहिए।', 'raj', 'Rajyog', 'folk-wisdom'),
   ('रोज़ थोड़ो-थोड़ो पढ़ो, तो पहाड़ भी पार हो जावे।', 'raj', 'Rajyog', 'consistency'),
   ('बूंद-बूंद सूं बावड़ी भरीजे, घड़ी-घड़ी री पढ़ाई सूं सपना पूरा होवे।', 'raj', 'Rajyog', 'folk-wisdom'),
@@ -126,4 +127,6 @@ insert into public.motivational_quotes (quote, language, attribution, category) 
   ('Courage is opening the subject you have been avoiding.', 'en', 'Rajyog', 'courage'),
   ('Folk artists of Rajasthan practise one song for years. Mastery is repetition with attention.', 'en', 'Rajyog', 'culture'),
   ('Do the next right thing: one lecture, one note, one question.', 'en', 'Rajyog', 'discipline'),
-  ('Selection is not luck. It is a thousand ordinary days done well.', 'en', 'Rajyog', 'exam');
+  ('Selection is not luck. It is a thousand ordinary days done well.', 'en', 'Rajyog', 'exam')
+) as v(quote, language, attribution, category)
+where not exists (select 1 from public.motivational_quotes q where q.quote = v.quote);  -- re-runnable

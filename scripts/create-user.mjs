@@ -5,7 +5,8 @@
  *   node --env-file=.env.local scripts/create-user.mjs \
  *     --email you@example.com --name "Your Name" --password "a-strong-password" [--admin]
  *
- * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the
+ * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY (or the legacy
+ * SUPABASE_SERVICE_ROLE_KEY) in the
  * environment. Use --admin for the owner account (content administration).
  */
 import { createClient } from '@supabase/supabase-js';
@@ -18,9 +19,9 @@ const args = Object.fromEntries(
 );
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !key) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY (try: node --env-file=.env.local scripts/create-user.mjs …)');
+  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SECRET_KEY (try: node --env-file=.env.local scripts/create-user.mjs …)');
   process.exit(1);
 }
 if (!args.email || !args.password || String(args.password).length < 8) {
