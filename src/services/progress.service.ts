@@ -10,6 +10,7 @@ export type ContinueItem = {
   subjectId: string;
   subjectName: string;
   youtubeVideoId: string;
+  videoProvider: 'youtube' | 'drive';
   durationSeconds: number | null;
   positionSeconds: number;
   percent: number;
@@ -22,7 +23,7 @@ export async function getContinueLearning(supabase: ServerSupabase, limit = 4): 
   const { data } = await supabase
     .from('lecture_progress')
     .select(
-      'lecture_id, last_position_seconds, completion_percentage, status, last_watched_at, lectures!inner(id, title, youtube_video_id, duration_seconds, is_active, chapters!inner(id, title, is_active, subjects!inner(id, name, is_active)))',
+      'lecture_id, last_position_seconds, completion_percentage, status, last_watched_at, lectures!inner(id, title, youtube_video_id, video_provider, duration_seconds, is_active, chapters!inner(id, title, is_active, subjects!inner(id, name, is_active)))',
     )
     .not('last_watched_at', 'is', null)
     .order('last_watched_at', { ascending: false })
@@ -39,6 +40,7 @@ export async function getContinueLearning(supabase: ServerSupabase, limit = 4): 
         subjectId: p.lectures.chapters.subjects.id,
         subjectName: p.lectures.chapters.subjects.name,
         youtubeVideoId: p.lectures.youtube_video_id,
+        videoProvider: p.lectures.video_provider,
         durationSeconds: p.lectures.duration_seconds,
         positionSeconds: p.last_position_seconds,
         percent: Number(p.completion_percentage),

@@ -192,7 +192,7 @@ export const lectureSchema = z.object({
   chapter_id: uuid,
   title: trimmed(200).min(1, 'Enter a title'),
   description: optionalText(4000),
-  video: trimmed(300).min(1, 'Paste a YouTube URL or video ID'),
+  video: trimmed(300).min(1, 'Paste a YouTube or Google Drive link'),
   duration: trimmed(12).optional(),
   sort_order: z.coerce.number().int().min(0).max(10000),
   completion_threshold: z.coerce.number().min(50).max(100),

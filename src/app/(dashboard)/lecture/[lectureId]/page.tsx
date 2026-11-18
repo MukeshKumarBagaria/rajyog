@@ -14,7 +14,7 @@ import { ButtonLink } from '@/components/ui/button';
 import { LectureStatusIcon } from '@/components/courses/status-icon';
 import { parseSegments } from '@/lib/tracking/segments';
 import { formatDuration } from '@/lib/utils/format';
-import { isValidVideoId } from '@/lib/youtube/video-id';
+import { isValidVideoRef } from '@/lib/youtube/video-id';
 import { uuid } from '@/lib/validation/schemas';
 import { cn } from '@/lib/utils/cn';
 
@@ -33,7 +33,7 @@ export default async function LecturePage({ params }: Props) {
   if (!uuid.safeParse(lectureId).success) notFound();
   const supabase = await getSupabase();
   const d = await getLectureDetail(supabase, lectureId);
-  if (!d || !isValidVideoId(d.lecture.youtube_video_id)) notFound();
+  if (!d || !isValidVideoRef(d.lecture.video_provider, d.lecture.youtube_video_id)) notFound();
 
   const { lecture, chapter, subject, progress } = d;
   const chapterHref = `/courses/${subject.id}/${chapter.id}`;
@@ -60,6 +60,7 @@ export default async function LecturePage({ params }: Props) {
           <LecturePlayer
             lectureId={lecture.id}
             videoId={lecture.youtube_video_id}
+            provider={lecture.video_provider}
             title={lecture.title}
             durationSeconds={lecture.duration_seconds}
             threshold={Number(lecture.completion_threshold)}

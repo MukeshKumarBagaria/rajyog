@@ -1,6 +1,7 @@
 import { Field, Input, Select, Textarea } from '@/components/ui/form-controls';
 import { EXAM_CATEGORIES, QUOTE_CATEGORIES, QUOTE_LANGUAGES } from '@/constants/app';
 import { formatClock } from '@/lib/utils/format';
+import { videoRefToInput } from '@/lib/youtube/video-id';
 import type { ChapterRow, CutoffRow, LectureRow, QuoteRow, SubjectRow } from '@/types/database';
 
 /* Server-renderable field sets used inside <FormDialog>. */
@@ -113,8 +114,18 @@ export function LectureFields({
       <Field label="Title" htmlFor="lec-title">
         <Input id="lec-title" name="title" required defaultValue={lecture?.title} />
       </Field>
-      <Field label="YouTube URL or video ID" htmlFor="lec-video" hint="Only the 11-character video ID is stored.">
-        <Input id="lec-video" name="video" required defaultValue={lecture?.youtube_video_id} placeholder="https://youtu.be/…" />
+      <Field
+        label="YouTube or Google Drive link"
+        htmlFor="lec-video"
+        hint="YouTube URL/ID, or a Drive file shared as “Anyone with the link”. Only the video ID is stored."
+      >
+        <Input
+          id="lec-video"
+          name="video"
+          required
+          defaultValue={lecture ? videoRefToInput(lecture.video_provider, lecture.youtube_video_id) : undefined}
+          placeholder="https://youtu.be/… or https://drive.google.com/file/d/…"
+        />
       </Field>
       <div className="grid grid-cols-3 gap-3">
         <Field label="Duration" htmlFor="lec-dur" hint="mm:ss — optional">

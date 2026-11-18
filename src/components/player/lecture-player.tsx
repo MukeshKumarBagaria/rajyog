@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/feedback';
 import { formatClock } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
 import type { Segment } from '@/lib/tracking/segments';
+import { drivePreviewUrl, type VideoProvider } from '@/lib/youtube/video-id';
 import type { LectureStatus } from '@/types/database';
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -16,6 +17,7 @@ const SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2];
 export type LecturePlayerProps = {
   lectureId: string;
   videoId: string;
+  provider: VideoProvider;
   title: string;
   durationSeconds: number | null;
   threshold: number;
@@ -31,6 +33,7 @@ export function LecturePlayer(props: LecturePlayerProps) {
     containerRef,
     ready,
     error,
+    fallback,
     isPlaying,
     ended,
     rate,
@@ -48,6 +51,7 @@ export function LecturePlayer(props: LecturePlayerProps) {
   } = useLectureTracking({
     lectureId: props.lectureId,
     videoId: props.videoId,
+    provider: props.provider,
     durationSeconds: props.durationSeconds,
     threshold: props.threshold,
     initialSegments: props.initialSegments,
@@ -63,8 +67,17 @@ export function LecturePlayer(props: LecturePlayerProps) {
     <div className="space-y-4">
       <div className="relative overflow-hidden rounded-[var(--radius-card)] bg-[#1b1418] shadow-[var(--shadow-lift)]">
         <div className="relative aspect-video w-full">
-          <div ref={containerRef} className="absolute inset-0 [&_iframe]:h-full [&_iframe]:w-full" />
-          {!ready && !error ? (
+          <div ref={containerRef} className={cn('absolute inset-0 [&_iframe]:h-full [&_iframe]:w-full', fallback && 'hidden')} />
+          {fallback ? (
+            <iframe
+              src={drivePreviewUrl(props.videoId)}
+              title={props.title}
+              className="absolute inset-0 h-full w-full"
+              allow="autoplay; fullscreen"
+              allowFullScreen
+            />
+          ) : null}
+          {!ready && !error && !fallback ? (
             <div className="absolute inset-0 flex items-center justify-center" aria-live="polite">
               <div className="flex flex-col items-center gap-3 text-sm text-white/70">
                 <span className="h-9 w-9 animate-spin rounded-full border-2 border-white/20 border-t-white/80" aria-hidden="true" />
@@ -80,6 +93,14 @@ export function LecturePlayer(props: LecturePlayerProps) {
           ) : null}
         </div>
       </div>
+
+      {fallback ? (
+        <div className="flex items-start gap-2 rounded-xl bg-warning-light px-4 py-2.5 text-[13px] text-warning-ink" role="status">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          This browser can’t play this video file directly, so it’s shown in Google Drive’s player. Watch progress isn’t tracked here — open this lecture in
+          Chrome, Edge or Firefox on a computer or Android to track coverage.
+        </div>
+      ) : null}
 
       {showResume ? (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-primary-light px-4 py-2.5 text-[13px] text-primary-strong">
@@ -108,10 +129,10 @@ export function LecturePlayer(props: LecturePlayerProps) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1.5">
-          <Button size="sm" variant="outline" onClick={() => seekBy(-10)} disabled={!ready} aria-label="Back 10 seconds">
+          <Button size="sm" variant="outline" onClick={() => seekBy(-10)} disabled={!ready || fallback} aria-label="Back 10 seconds">
             <Rewind className="h-4 w-4" /> 10s
           </Button>
-          <Button size="sm" variant="outline" onClick={() => seekBy(10)} disabled={!ready} aria-label="Forward 10 seconds">
+          <Button size="sm" variant="outline" onClick={() => seekBy(10)} disabled={!ready || fallback} aria-label="Forward 10 seconds">
             10s <FastForward className="h-4 w-4" />
           </Button>
         </div>
@@ -120,7 +141,7 @@ export function LecturePlayer(props: LecturePlayerProps) {
             <button
               key={s}
               type="button"
-              disabled={!ready}
+              disabled={!ready || fallback}
               onClick={() => setRate(s)}
               aria-pressed={rate === s}
               className={cn(

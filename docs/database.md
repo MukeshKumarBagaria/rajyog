@@ -18,7 +18,7 @@ UUID primary keys everywhere; all timestamps are `timestamptz` (UTC).
 |---|---|
 | `subjects` | `syllabus_stage` PRELIMS / MAINS / BOTH, `sort_order`, `is_active` |
 | `chapters` | belongs to a subject; `weight` reserved for weighted completion |
-| `lectures` | stores only the 11-char `youtube_video_id` (validated by regex), optional `duration_seconds`, `completion_threshold` (default 0.9) |
+| `lectures` | stores only a video ID — `video_provider` (`youtube` or `drive`) + `youtube_video_id` (11-char YouTube ID or Google Drive file ID, validated by regex per provider), optional `duration_seconds`, `completion_threshold` (default 0.9) |
 | `motivational_quotes` | `language` en / hi / raj, `category`, optional `display_date` |
 | `historical_cutoffs` | year, stage, category, `cutoff_type`, `exam_pattern_version`, `cutoff_marks` **and** `total_marks`, mandatory https `source_url` |
 | `app_admins` | administrator membership — writable only with the service role |

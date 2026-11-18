@@ -1,7 +1,20 @@
 # Video tracking
 
-Lectures are embedded with the official **YouTube IFrame Player API**
-(`youtube-nocookie.com` host, related videos limited, annotations off).
+Lectures come from one of two providers (`lectures.video_provider`):
+
+* **YouTube** — embedded with the official **YouTube IFrame Player API**
+  (`youtube-nocookie.com` host, related videos limited, annotations off).
+* **Google Drive** — a video file shared as *Anyone with the link* (MKV/MP4,
+  H.264 + AAC). It plays in a native `<video>` element
+  (`src/lib/video/html5-player.ts`, which exposes the same small API as the
+  YouTube player, so tracking is identical). Drive won't serve file bytes to a
+  browser directly, so the player streams through
+  `/api/video/drive/[fileId]`: a signed-in-only proxy that forwards Range
+  requests to Drive in 8 MB chunks and only serves files that belong to a
+  lecture. If the browser can't decode the file (e.g. MKV in Safari/iOS), the
+  page falls back to Drive's own embedded player: playback works there, but
+  coverage isn't tracked.
+
 Tracking lives in three layers:
 
 | Layer | File | Responsibility |

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadYouTubeApi, PlayerState, youtubeErrorMessage, type YTPlayer } from '@/lib/youtube/iframe-api';
+import { createHtml5Player, HTML5_RATES } from '@/lib/video/html5-player';
+import { driveStreamUrl, type VideoProvider } from '@/lib/youtube/video-id';
 import { PlaybackTracker } from '@/lib/tracking/playback-tracker';
 import { mergeSegments, parseSegments, type Segment } from '@/lib/tracking/segments';
 import { beaconProgress, flushOutbox, sendProgress } from '@/lib/tracking/progress-queue';
@@ -14,6 +16,7 @@ import type { ProgressPayload } from '@/lib/validation/schemas';
 type Options = {
   lectureId: string;
   videoId: string;
+  provider: VideoProvider;
   durationSeconds: number | null;
   threshold: number; // 0–1
   initialSegments: Segment[];
@@ -41,15 +44,20 @@ type ServerProgress = {
 const newSessionId = () => crypto.randomUUID();
 
 /**
- * Embeds a YouTube lecture and tracks it reliably:
+ * Embeds a lecture (YouTube IFrame player, or a native <video> streaming a
+ * Google Drive file) and tracks it reliably:
  *  • samples the player once per second into a PlaybackTracker (seek-, buffer-
  *    and hidden-tab-aware),
  *  • sends heartbeats every 15 s, on pause/end, when the tab hides and on exit,
  *  • persists unsent heartbeats in a durable outbox (offline-safe), and
  *  • yields to a running manual focus timer so time is never double counted.
+ *
+ * If a Drive file can't be decoded natively (e.g. MKV in Safari), `fallback`
+ * becomes true and the caller shows Google Drive's own player instead —
+ * playback works, but coverage can't be tracked there.
  */
 export function useLectureTracking(opts: Options) {
-  const { lectureId, videoId, durationSeconds, threshold } = opts;
+  const { lectureId, videoId, provider, durationSeconds, threshold } = opts;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
@@ -62,6 +70,7 @@ export function useLectureTracking(opts: Options) {
   const [ready, setReady] = useState(false);
   const [playerState, setPlayerState] = useState<number>(PlayerState.UNSTARTED);
   const [error, setError] = useState<string | null>(null);
+  const [fallback, setFallback] = useState(false);
   const [rate, setRate] = useState(1);
   const [rates, setRates] = useState<number[]>([1]);
   const [currentTime, setCurrentTime] = useState(opts.initialPosition);
@@ -150,63 +159,90 @@ export function useLectureTracking(opts: Options) {
 
     void flushOutbox();
 
-    loadYouTubeApi()
-      .then((YT) => {
-        if (cancelled) return;
-        playerRef.current = new YT.Player(host, {
-          videoId,
-          host: 'https://www.youtube-nocookie.com',
-          width: '100%',
-          height: '100%',
-          playerVars: {
-            rel: 0,
-            modestbranding: 1,
-            playsinline: 1,
-            iv_load_policy: 3,
-            enablejsapi: 1,
-            start,
-            origin: window.location.origin,
-          },
-          events: {
-            onReady: (e) => {
-              if (cancelled) return;
-              setReady(true);
-              setRates(e.target.getAvailablePlaybackRates?.() ?? [1]);
-              setRate(e.target.getPlaybackRate?.() ?? 1);
-              const d = e.target.getDuration?.();
-              if (d) setDuration((cur) => reconcileDuration(cur, d));
-            },
-            onStateChange: (e) => {
-              const prev = stateRef.current;
-              if (prev === PlayerState.PLAYING && e.data !== PlayerState.PLAYING) finalizeSample();
-              stateRef.current = e.data;
-              setPlayerState(e.data);
+    const onReady = (p: YTPlayer) => {
+      if (cancelled) return;
+      setReady(true);
+      setRates(p.getAvailablePlaybackRates?.() ?? [1]);
+      setRate(p.getPlaybackRate?.() ?? 1);
+      const d = p.getDuration?.();
+      if (d) setDuration((cur) => reconcileDuration(cur, d));
+    };
 
-              if (e.data === PlayerState.PLAYING) {
-                setEnded(false);
-                const p = e.target;
-                tracker.sample({
-                  wallMs: performance.now(),
-                  position: p.getCurrentTime(),
-                  playing: true,
-                  visible: document.visibilityState === 'visible',
-                  rate: p.getPlaybackRate(),
-                });
-                const d = p.getDuration?.();
-                if (d) setDuration((cur) => reconcileDuration(cur, d));
-              } else if (e.data === PlayerState.PAUSED) {
-                void flush();
-              } else if (e.data === PlayerState.ENDED) {
-                setEnded(true);
-                void flush();
-              }
-            },
-            onPlaybackRateChange: (e) => setRate(e.data),
-            onError: (e) => setError(youtubeErrorMessage(e.data)),
-          },
+    const onStateChange = (data: number, p: YTPlayer) => {
+      const prev = stateRef.current;
+      if (prev === PlayerState.PLAYING && data !== PlayerState.PLAYING) finalizeSample();
+      stateRef.current = data;
+      setPlayerState(data);
+
+      if (data === PlayerState.PLAYING) {
+        setEnded(false);
+        tracker.sample({
+          wallMs: performance.now(),
+          position: p.getCurrentTime(),
+          playing: true,
+          visible: document.visibilityState === 'visible',
+          rate: p.getPlaybackRate(),
         });
-      })
-      .catch((err: Error) => !cancelled && setError(err.message));
+        const d = p.getDuration?.();
+        if (d) setDuration((cur) => reconcileDuration(cur, d));
+      } else if (data === PlayerState.PAUSED) {
+        void flush();
+      } else if (data === PlayerState.ENDED) {
+        setEnded(true);
+        void flush();
+      }
+    };
+
+    if (provider === 'drive') {
+      playerRef.current = createHtml5Player(host, driveStreamUrl(videoId), start, {
+        onReady,
+        onStateChange,
+        onPlaybackRateChange: (r) => setRate(r),
+        onError: () => {
+          if (cancelled) return;
+          // Keep what was watched, then switch to Google Drive's own player.
+          finalizeSample();
+          void flush();
+          try {
+            playerRef.current?.destroy();
+          } catch {
+            /* already gone */
+          }
+          playerRef.current = null;
+          stateRef.current = PlayerState.UNSTARTED;
+          setPlayerState(PlayerState.UNSTARTED);
+          setRates(HTML5_RATES);
+          setFallback(true);
+        },
+      });
+    } else {
+      loadYouTubeApi()
+        .then((YT) => {
+          if (cancelled) return;
+          playerRef.current = new YT.Player(host, {
+            videoId,
+            host: 'https://www.youtube-nocookie.com',
+            width: '100%',
+            height: '100%',
+            playerVars: {
+              rel: 0,
+              modestbranding: 1,
+              playsinline: 1,
+              iv_load_policy: 3,
+              enablejsapi: 1,
+              start,
+              origin: window.location.origin,
+            },
+            events: {
+              onReady: (e) => onReady(e.target),
+              onStateChange: (e) => onStateChange(e.data, e.target),
+              onPlaybackRateChange: (e) => setRate(e.data),
+              onError: (e) => setError(youtubeErrorMessage(e.data)),
+            },
+          });
+        })
+        .catch((err: Error) => !cancelled && setError(err.message));
+    }
 
     return () => {
       cancelled = true;
@@ -219,10 +255,12 @@ export function useLectureTracking(opts: Options) {
       }
       playerRef.current = null;
       container.innerHTML = '';
+      setFallback(false);
+      setReady(false);
     };
     // The player is created once per lecture; initial values are intentionally not dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId, lectureId]);
+  }, [videoId, provider, lectureId]);
 
   // 1 Hz sampling + periodic heartbeat.
   useEffect(() => {
@@ -282,6 +320,7 @@ export function useLectureTracking(opts: Options) {
     containerRef,
     ready,
     error,
+    fallback,
     playerState,
     isPlaying: playerState === PlayerState.PLAYING,
     ended,

@@ -11,9 +11,9 @@ import { bulkImportLecturesAction } from '@/actions/admin';
 import { parseBulkLectures } from '@/lib/youtube/video-id';
 import { toast } from '@/stores/toast-store';
 
-const EXAMPLE = `# Title | YouTube URL or ID | duration (optional)
+const EXAMPLE = `# Title | YouTube or Google Drive link | duration (optional)
 Introduction to Ancient Rajasthan | https://youtu.be/xxxxxxxxxxx | 42:10
-Kalibangan and Ahar Culture | https://www.youtube.com/watch?v=xxxxxxxxxxx`;
+Kalibangan and Ahar Culture | https://drive.google.com/file/d/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/view | 1:05:00`;
 
 export function BulkImport({ chapterId, chapterTitle }: { chapterId: string; chapterTitle: string }) {
   const router = useRouter();

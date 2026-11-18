@@ -63,13 +63,13 @@ export default async function AdminLecturesPage({ searchParams }: { searchParams
           {lectures.map((l, i) => (
             <div key={l.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
               <MoveButtons id={l.id} first={i === 0} last={i === lectures.length - 1} />
-              <VideoThumb videoId={l.youtube_video_id} showPlay={false} className="hidden w-24 shrink-0 rounded-lg sm:block" />
+              <VideoThumb videoId={l.youtube_video_id} provider={l.video_provider} showPlay={false} className="hidden w-24 shrink-0 rounded-lg sm:block" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-ink">
                   {l.title} {!l.is_active ? <Badge tone="warning">Hidden</Badge> : null}
                 </p>
                 <p className="text-xs text-ink-secondary">
-                  {l.youtube_video_id} · {l.duration_seconds ? formatDuration(l.duration_seconds) : 'duration auto-detected on first play'} · completes at{' '}
+                  {l.video_provider === 'drive' ? 'Google Drive' : l.youtube_video_id} · {l.duration_seconds ? formatDuration(l.duration_seconds) : 'duration auto-detected on first play'} · completes at{' '}
                   {Math.round(Number(l.completion_threshold) * 100)}%
                 </p>
               </div>

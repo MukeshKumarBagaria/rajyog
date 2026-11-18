@@ -116,7 +116,7 @@ export async function getSubjectDetail(supabase: ServerSupabase, subjectId: stri
   };
 }
 
-export type LectureListItem = Pick<LectureRow, 'id' | 'title' | 'description' | 'duration_seconds' | 'youtube_video_id' | 'sort_order'> & {
+export type LectureListItem = Pick<LectureRow, 'id' | 'title' | 'description' | 'duration_seconds' | 'youtube_video_id' | 'video_provider' | 'sort_order'> & {
   status: LectureStatus;
   completionPercentage: number;
   lastWatchedAt: string | null;
@@ -153,7 +153,7 @@ export async function getChapterDetail(supabase: ServerSupabase, subjectId: stri
 async function getChapterLectures(supabase: ServerSupabase, chapterId: string): Promise<LectureListItem[]> {
   const { data: lectures } = await supabase
     .from('lectures')
-    .select('id, title, description, duration_seconds, youtube_video_id, sort_order')
+    .select('id, title, description, duration_seconds, youtube_video_id, video_provider, sort_order')
     .eq('chapter_id', chapterId)
     .eq('is_active', true)
     .order('sort_order')
@@ -216,7 +216,7 @@ export async function getLectureDetail(supabase: ServerSupabase, lectureId: stri
     for (const c of (nextChapters ?? []).slice(cIdx + 1)) {
       const { data: first } = await supabase
         .from('lectures')
-        .select('id, title, description, duration_seconds, youtube_video_id, sort_order')
+        .select('id, title, description, duration_seconds, youtube_video_id, video_provider, sort_order')
         .eq('chapter_id', c.id)
         .eq('is_active', true)
         .order('sort_order')

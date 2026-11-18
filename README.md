@@ -21,7 +21,7 @@ shared, every aspirant's progress is private and enforced by Row Level Security.
 |---|---|
 | **Home** | Daily motivation (Hindi, Rajasthani-inspired and English originals), course completion ring with subject bars, today's verified study vs goal, weekly hours, streak, RAS readiness snapshot, continue-learning with exact resume, today's tasks (with overdue carry-over). |
 | **Courses** | Subject → Chapter → Lecture catalogue, completion per subject/chapter, last-watched markers, chapter notes. |
-| **Lecture player** | Embedded YouTube (no-cookie host), resume position, ±10 s, playback speed, coverage map of what you actually watched, previous/next (across chapters), bookmarks, personal notes. Completion requires **90 % unique coverage** — seeking to the end never completes a lecture. |
+| **Lecture player** | Embedded YouTube (no-cookie host) or Google Drive videos, resume position, ±10 s, playback speed, coverage map of what you actually watched, previous/next (across chapters), bookmarks, personal notes. Completion requires **90 % unique coverage** — seeking to the end never completes a lecture. |
 | **Automatic study tracking** | Counts only real, visible, advancing playback. Pauses, buffering, hidden tabs, seeks and sleeping devices never count. Offline-safe outbox; replays never double count. |
 | **Focus** | Pomodoro presets (25/45/50/custom) and stopwatch, subject + study type, survives refresh/navigation, chime + optional notification, daily goal ring (editable per day), streak (configurable minimum), weekly chart, monthly heatmap calendar, recent sessions. |
 | **Analysis** | Mock-test history (add/edit/delete), negative-marking calculator, subject- or paper-wise marks, separate Prelims/Mains analysis, readiness score with transparent component breakdown, benchmark vs official cutoffs (your category only), estimated score range, trend & last-five charts, strong/weak subjects, what-if calculator, historical cutoff table with sources. |
@@ -105,7 +105,7 @@ npm run dev
 ### 5. Add your content
 
 * **Admin → Lectures → Bulk import** — paste one lecture per line:
-  `Title | YouTube URL or ID | 45:30` (duration optional; it is detected on first play).
+  `Title | YouTube or Google Drive link | 45:30` (duration optional; it is detected on first play). Drive files must be shared as "Anyone with the link".
 * **Admin → Cutoffs** — enter only officially published RPSC cutoffs, with the source link.
   No cutoffs are seeded on purpose.
 * **Admin → Users** — invite other aspirants; each gets fully private progress.

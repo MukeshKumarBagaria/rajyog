@@ -2,18 +2,29 @@
 
 import { useState } from 'react';
 import { PlayCircle } from 'lucide-react';
-import { thumbnailUrl } from '@/lib/youtube/video-id';
+import { thumbnailUrl, type VideoProvider } from '@/lib/youtube/video-id';
 import { cn } from '@/lib/utils/cn';
 
-/** YouTube thumbnail with a calm fallback when the image can't load (offline, blocked). */
-export function VideoThumb({ videoId, className, showPlay = true }: { videoId: string; className?: string; showPlay?: boolean }) {
+/** YouTube / Google Drive thumbnail with a calm fallback when the image can't load (offline, blocked, not generated yet). */
+export function VideoThumb({
+  videoId,
+  provider = 'youtube',
+  className,
+  showPlay = true,
+}: {
+  videoId: string;
+  provider?: VideoProvider;
+  className?: string;
+  showPlay?: boolean;
+}) {
   const [failed, setFailed] = useState(false);
   return (
     <div className={cn('relative aspect-video overflow-hidden bg-gradient-to-br from-primary-light to-secondary/60', className)}>
       {!failed ? (
         // eslint-disable-next-line @next/next/no-img-element -- already-optimised YouTube JPEG; avoids image-optimisation quota
         <img
-          src={thumbnailUrl(videoId)}
+          src={thumbnailUrl(videoId, 'mq', provider)}
+          referrerPolicy="no-referrer"
           alt=""
           loading="lazy"
           decoding="async"

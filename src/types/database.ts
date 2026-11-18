@@ -62,7 +62,9 @@ export type LectureRow = {
   chapter_id: string;
   title: string;
   description: string | null;
+  /** Provider video ID: YouTube video ID, or Google Drive file ID when video_provider = 'drive'. */
   youtube_video_id: string;
+  video_provider: 'youtube' | 'drive';
   duration_seconds: number | null;
   sort_order: number;
   completion_threshold: number;

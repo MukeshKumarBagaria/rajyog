@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseBulkLectures, parseDurationInput, parseVideoId } from '@/lib/youtube/video-id';
+import { isValidVideoRef, parseBulkLectures, parseDriveFileId, parseDurationInput, parseVideoId, parseVideoRef } from '@/lib/youtube/video-id';
 import { pickQuoteForDay } from '@/lib/quotes';
 import { signUnlockToken, verifyUnlockToken } from '@/lib/auth/lock-token';
 import { formatClock, formatDuration } from '@/lib/utils/format';
@@ -24,8 +24,39 @@ describe('YouTube ids', () => {
     expect(parseDurationInput('1:02:03')).toBe(3723);
     expect(parseDurationInput('abc')).toBeNull();
     const r = parseBulkLectures('# comment\nIntro | https://youtu.be/dQw4w9WgXcQ | 10:00\n\nBad | nope\n | dQw4w9WgXcQ');
-    expect(r.items).toEqual([{ title: 'Intro', videoId: 'dQw4w9WgXcQ', durationSeconds: 600, line: 2 }]);
+    expect(r.items).toEqual([{ title: 'Intro', videoId: 'dQw4w9WgXcQ', provider: 'youtube', durationSeconds: 600, line: 2 }]);
     expect(r.errors.map((e) => e.line)).toEqual([4, 5]);
+  });
+});
+
+describe('Google Drive ids', () => {
+  const id = '1WdePmnjggj3gYNOvdTftcPHKl8GkiXIV';
+  it.each([
+    [id],
+    [`https://drive.google.com/file/d/${id}/view?usp=sharing`],
+    [`https://drive.google.com/file/d/${id}/preview`],
+    [`https://drive.google.com/open?id=${id}`],
+    [`https://drive.google.com/uc?id=${id}&export=download`],
+    [`drive.usercontent.google.com/download?id=${id}`],
+  ])('parses %s', (input) => expect(parseVideoRef(input)).toEqual({ provider: 'drive', id }));
+
+  it('keeps YouTube links on YouTube and rejects foreign hosts', () => {
+    expect(parseVideoRef('https://youtu.be/dQw4w9WgXcQ')).toEqual({ provider: 'youtube', id: 'dQw4w9WgXcQ' });
+    expect(parseDriveFileId(`https://example.com/file/d/${id}/view`)).toBeNull();
+    expect(parseDriveFileId('https://drive.google.com/file/d/short/view')).toBeNull();
+    expect(parseVideoRef('https://drive.google.com/drive/folders/1s8HQi97vSCCL7p5Oa_YpPO1b988GzcDu')).toBeNull();
+  });
+
+  it('validates stored refs per provider', () => {
+    expect(isValidVideoRef('drive', id)).toBe(true);
+    expect(isValidVideoRef('youtube', id)).toBe(false);
+    expect(isValidVideoRef('youtube', 'dQw4w9WgXcQ')).toBe(true);
+    expect(isValidVideoRef('drive', 'dQw4w9WgXcQ')).toBe(false);
+  });
+
+  it('bulk-imports Drive links', () => {
+    const r = parseBulkLectures(`Lokayukta | https://drive.google.com/file/d/${id}/view | 1:45:09`);
+    expect(r.items).toEqual([{ title: 'Lokayukta', videoId: id, provider: 'drive', durationSeconds: 6309, line: 1 }]);
   });
 });
 

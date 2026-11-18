@@ -27,7 +27,7 @@ export function ContinueCard({ items }: { items: ContinueItem[] }) {
         ) : (
           <>
             <Link href={`/lecture/${main.lectureId}`} className="group flex gap-4">
-              <VideoThumb videoId={main.youtubeVideoId} className="w-36 shrink-0 rounded-xl sm:w-44" />
+              <VideoThumb videoId={main.youtubeVideoId} provider={main.videoProvider} className="w-36 shrink-0 rounded-xl sm:w-44" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold text-primary-strong">{main.subjectName}</p>
                 <p className="truncate text-xs text-ink-secondary">{main.chapterTitle}</p>

@@ -16,7 +16,7 @@ import {
   subjectSchema,
   uuid,
 } from '@/lib/validation/schemas';
-import { parseBulkLectures, parseDurationInput, parseVideoId } from '@/lib/youtube/video-id';
+import { parseBulkLectures, parseDurationInput, parseVideoRef } from '@/lib/youtube/video-id';
 import type { ActionResult } from './types';
 
 /*
@@ -139,8 +139,14 @@ export async function saveLectureAction(formData: FormData): Promise<ActionResul
   });
   if (!parsed.success) return { ok: false, error: firstError(parsed.error), fieldErrors: fieldErrors(parsed.error) };
 
-  const videoId = parseVideoId(parsed.data.video);
-  if (!videoId) return { ok: false, error: 'That is not a valid YouTube URL or 11-character video ID.', fieldErrors: { video: ['Invalid YouTube video'] } };
+  const video = parseVideoRef(parsed.data.video);
+  if (!video) {
+    return {
+      ok: false,
+      error: 'That is not a valid YouTube link/video ID or Google Drive file link.',
+      fieldErrors: { video: ['Invalid YouTube or Google Drive video'] },
+    };
+  }
   const duration = parsed.data.duration ? parseDurationInput(parsed.data.duration) : null;
   if (parsed.data.duration && duration === null) return { ok: false, error: 'Use a duration like 45:30 or 1:02:03.', fieldErrors: { duration: ['Invalid duration'] } };
 
@@ -149,7 +155,8 @@ export async function saveLectureAction(formData: FormData): Promise<ActionResul
     const { id, video: _video, duration: _d, completion_threshold, ...rest } = parsed.data;
     const values = {
       ...rest,
-      youtube_video_id: videoId,
+      youtube_video_id: video.id,
+      video_provider: video.provider,
       duration_seconds: duration,
       completion_threshold: completion_threshold / 100,
     };
@@ -178,6 +185,7 @@ export async function bulkImportLecturesAction(chapterId: string, text: string):
         chapter_id: chapter,
         title: it.title,
         youtube_video_id: it.videoId,
+        video_provider: it.provider,
         duration_seconds: it.durationSeconds,
         sort_order: base + i,
       })),
